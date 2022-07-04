@@ -1,0 +1,10 @@
+server: https://<masternodename>:9345
+#token: <server-token>
+profile: cis-1.6
+secrets-encryption: "true"
+tls-san:
+  - ${HOSTNAME}
+  - ${HOSTNAME}.${DOMAIN_NAME}
+  - ${hostname -i}
+  - vip.${DOMAIN_NAME}
+  - ${VIP_IP}
