@@ -1,0 +1,94 @@
+# #########################################
+#          Persistent Volume Claims
+# By: Marshall Mitchell
+# Created: 07.12.2022
+# #########################################
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+# Change storageclass to whatever storageclass you would like to use: longhorn, ceph-block, cephfs, local-storage, mayastor-block
+  storageClassName: ceph-block
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 100Gi
+---
+# #########################################
+#          Deployment
+# By: Unknown
+# Created: Unknown
+# Updated by: Marshall Mitchell
+# Date: 07.11.2022
+# #########################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  labels:
+    app: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+#      securityContext:
+#        fsGroup: 1001
+#        runAsGroup: 1001
+#        runAsUser: 1001
+      nodeName: b000arscc031
+      volumes:
+        - name: registry-data
+          persistentVolumeClaim:
+            claimName: registry-data-pvc
+        - name: registry-certificates
+          secret:
+            secretName: registry-certificates
+      containers:
+      - name: registry
+#        securityContext:
+#          allowPrivilegeEscalation: false
+        env:
+        - name: REGISTRY_HTTP_TLS_CERTIFICATE
+          value: "/certs/cert"
+        - name: REGISTRY_HTTP_TLS_KEY
+          value: "/certs/key"
+        - name: REGISTRY_HTTP_ADDR
+          value: "0.0.0.0:30443"
+        image: docker.io/library/registry:2
+        ports:
+        - containerPort: 30443
+        volumeMounts:
+        - name: registry-data
+          mountPath: /var/lib/registry
+        - mountPath: /certs
+          name: registry-certificates
+          readOnly: true
+---
+# #########################################
+#          Service
+# By: Unknown
+# Created: Unknown
+# #########################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-svc
+spec:
+  type: NodePort
+  selector:
+    app: registry
+  ports:
+    - port: 30443
+      targetPort: 30443
+      nodePort: 30500
+
+
