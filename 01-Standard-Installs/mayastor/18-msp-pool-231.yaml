@@ -1,0 +1,9 @@
+apiVersion: "openebs.io/v1alpha1"
+kind: MayastorPool
+metadata:
+  name: nvme-231
+  namespace: mayastor
+spec:
+  node: k000srv231
+  disks: 
+    - /dev/nvme0n1
